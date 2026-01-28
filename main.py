@@ -1,3 +1,5 @@
+# vi: set expandtab tabstop=4 shiftwidth=4 softtabstop=4:
+
 from enum import Enum
 
 class TokenType(Enum):
@@ -5,6 +7,9 @@ class TokenType(Enum):
     Plus = 2
     Minus = 3
     Dup = 4
+    QuotedIdent = 5
+    Ident = 6
+    Store = 7
     Assert = 10
 
 class Splice:
@@ -27,9 +32,10 @@ class Token:
         self.type = ty
         self.splice = splice
 
-class RpnCalc:
+class Executor:
     def __init__(self):
         self.stack = []
+        self.variables = {}
     
     def process(self, tokens):
         for token in tokens:
@@ -43,17 +49,27 @@ class RpnCalc:
                 case TokenType.Dup:
                     if self.stack:
                         self.stack.append(self.stack[-1])
+                case TokenType.QuotedIdent:
+                    # Push the symbol name onto stack
+                    self.stack.append(token.splice.text())
+                case TokenType.Ident:
+                    name = token.splice.text()
+                    if name in self.variables:
+                        self.stack.append(self.variables[name])
+                    else:
+                        raise ValueError(f"Undefined variable: {name}")
+                case TokenType.Store:
+                    if len(self.stack) < 2:
+                        raise ValueError("Store needs 2 values: value and name")
+                    name = self.stack.pop()   # Variable name (top of stack)
+                    value = self.stack.pop()  # Value to store
+                    self.variables[name] = value
     
     def print_data_stack(self):
-        if not self.stack:
-            print("Stack empty")
-        elif len(self.stack) == 1:
-            print(self.stack[0])
-        else:
-            n = len(self.stack) - 1
-            for element in self.stack:
-                print(f"[{n}]: {element}")
-                n = n - 1
+        n = len(self.stack) - 1
+        for element in self.stack:
+            print(f"[{n}]: {element}")
+            n = n - 1
     
     def process_binary_op(self, op):
         if len(self.stack) < 2:
@@ -74,10 +90,17 @@ def tokenize(input_str):
         pos = end
         
         # Determine token type
-        if part == '+':
+        if part.startswith('\''):
+            token_type = TokenType.QuotedIdent
+            start = start + 1  # Skip the quote in the splice
+        elif part.isalpha():
+            token_type = TokenType.Ident
+        elif part == '+':
             token_type = TokenType.Plus
         elif part == '-':
             token_type = TokenType.Minus
+        elif part == '=':
+            token_type = TokenType.Store
         elif part == 'dup':
             token_type = TokenType.Dup
         else:
@@ -94,11 +117,10 @@ def tokenize(input_str):
     return tokens
 
 def main():
-    calc = RpnCalc()
-    
+    calc = Executor()
     while True:
         try:
-            line = input("\n> ").strip()
+            line = input("\nλ ").strip()
             
             if line.lower() in ('quit', 'exit', 'q'):
                 break
@@ -124,3 +146,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
