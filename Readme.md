@@ -20,9 +20,6 @@ python3 main.py
 
 ### Example Session
 ```
-RPN Calculator
-Commands: 'clear', 'quit'
-
 > 1 2 +
 3.0
 
@@ -41,7 +38,6 @@ Commands: 'clear', 'quit'
 12.0
 
 > clear
-Stack cleared
 
 > quit
 ```
@@ -56,8 +52,8 @@ Stack cleared
 
 ## Architecture
 
-- **Splice**: String view for efficient source position tracking (similar to `std::string_view`)
 - **Token**: Pairs a `TokenType` enum with a `Splice` for lexical analysis
+- **Splice**: String view for efficient source position tracking (similar to `std::string_view`)
 - **RpnCalc**: Stack-based calculator engine
 - **tokenize()**: Lexer that converts input strings into token streams
 
