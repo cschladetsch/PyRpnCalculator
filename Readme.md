@@ -21,7 +21,7 @@ python3 main.py
 ### Example Session
 ```
 > 1 2 +
-3.0
+[0] 3.0
 
 > 5 3 -
 [1]: 2.0
@@ -61,6 +61,3 @@ python3 main.py
 
 - Python 3.10+ (uses pattern matching with `match`/`case`)
 
-## Author
-
-Christian - Principal C++ Engineer learning Python
