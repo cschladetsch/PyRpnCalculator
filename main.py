@@ -3,14 +3,50 @@
 from enum import Enum
 
 class TokenType(Enum):
-    Number = 1
+    Null = 0
+
     Plus = 2
     Minus = 3
-    Dup = 4
-    QuotedIdent = 5
-    Ident = 6
-    Store = 7
-    Assert = 10
+    Mul = 4
+    Div = 5
+
+    Number = 10
+    String = 11
+    Vector = 12
+    Map = 13
+
+    Assert = 30
+
+    Dup = 40
+    Over = 41
+    Swap = 42
+    Roll = 43
+    Rot = 44
+    Depth = 45
+
+    Store = 50
+
+    Ident = 60
+    QuotedIdent = 61
+
+    ToVec = 70
+    ToString = 71
+    ToMap = 72
+    ToSet = 73
+    Expand = 74
+    ToVec3 = 75
+    ToVec4 = 76
+
+    If = 90
+    IfElse = 91
+
+    For = 100
+    While = 101
+    Loop = 102
+
+    Suspend = 200
+    Resume = 201
+    Replace = 202
 
 class Splice:
     def __init__(self, string, start, stop):
@@ -37,6 +73,11 @@ class Executor:
         self.stack = []
         self.variables = {}
     
+    def pop(self):
+        if len(self.stack) == 0:
+            raise ValueError("Empty stack")
+        return self.stack.pop()
+
     def process(self, tokens):
         for token in tokens:
             match token.type:
@@ -61,9 +102,13 @@ class Executor:
                 case TokenType.Store:
                     if len(self.stack) < 2:
                         raise ValueError("Store needs 2 values: value and name")
-                    name = self.stack.pop()   # Variable name (top of stack)
-                    value = self.stack.pop()  # Value to store
+                    name = self.pop()   # Variable name (top of stack)
+                    value = self.pop()  # Value to store
                     self.variables[name] = value
+                case TokenType.Assert:
+                    result = self.pop()
+                    if not result:
+                        raise ValueError("Assert failed.")
     
     def print_data_stack(self):
         n = len(self.stack) - 1
@@ -74,8 +119,8 @@ class Executor:
     def process_binary_op(self, op):
         if len(self.stack) < 2:
             raise ValueError("Insufficient operands")
-        b = self.stack.pop()
-        a = self.stack.pop()
+        b = self.pop()
+        a = self.pop()
         self.stack.append(op(a, b))
 
 def tokenize(input_str):
@@ -93,8 +138,6 @@ def tokenize(input_str):
         if part.startswith('\''):
             token_type = TokenType.QuotedIdent
             start = start + 1  # Skip the quote in the splice
-        elif part.isalpha():
-            token_type = TokenType.Ident
         elif part == '+':
             token_type = TokenType.Plus
         elif part == '-':
@@ -103,6 +146,10 @@ def tokenize(input_str):
             token_type = TokenType.Store
         elif part == 'dup':
             token_type = TokenType.Dup
+        elif part == 'assert':
+            token_type = TokenType.Assert
+        elif part.isalpha():
+            token_type = TokenType.Ident
         else:
             try:
                 float(part)
